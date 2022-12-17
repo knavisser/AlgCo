@@ -1,5 +1,6 @@
 import fileinput
 
+# Make necessary class that compares inputs
 class inputCompare:
     def __init__(self):
         self.correct = ""
@@ -7,54 +8,63 @@ class inputCompare:
         self.inputs = []
         self.output = []
 
+
+    # Function to add input
     def addInput(self, input):
         self.inputs.append(input)
 
-    def findSequence(self, input):
+
+    # Recrusive algorithm to compare input to correct input and return sequence
+    def findSequence(self, input, lenC, lenI, matrix):
         correct = str(self.correct)
-        len1 = len(correct)
-        len2 = len(input)
-        matrix = [[0 for x in range(len1 + 1)] for x in range(len2 + 1)]
-        for x in range(len1 + 1):
-            for y in range(len2 + 1):
-                if x == 0 or y == 0:
-                    matrix[x][y] = 0
-                elif correct[x - 1] == input[y - 1]:
-                    matrix[x][y] = matrix[x - 1][y - 1] + 1
+    
+        if lenC == 0 or lenI == 0:
+            return ['']
+    
+        if correct[lenC - 1] == input[lenI - 1]:
+            seq = self.findSequence(input, lenC - 1, lenI - 1, matrix)
+            for i in range(len(seq)):
+                seq[i] = seq[i] + (correct[lenC - 1])
+            return seq
+    
+        if matrix[lenC - 1][lenI] > matrix[lenC][lenI - 1]:
+            return self.findSequence(input, lenC - 1, lenI, matrix)
+
+        if matrix[lenC][lenI - 1] > matrix[lenC - 1][lenI]:
+            return self.findSequence(input, lenC, lenI - 1, matrix)
+
+        list1 = self.findSequence(input, lenC - 1, lenI, matrix)
+        list2 = self.findSequence(input, lenC, lenI - 1, matrix)
+        return list1 + list2
+
+
+    # Overarching function to find the right sequence (Since there will be multiple with the same length)
+    def findRightSequence(self, input):
+        correct = str(self.correct)
+        matrix = [[0 for x in range(len(input) + 1)] for y in range(len(correct) + 1)]
+    
+        for indexX in range(1, len(correct) + 1):
+            for indexY in range(1, len(input) + 1):
+                if correct[indexX - 1] == input[indexY - 1]:
+                    matrix[indexX][indexY] = matrix[indexX - 1][indexY - 1] + 1
                 else:
-                    matrix[x][y] = max(matrix[x - 1][y], matrix[x][y - 1])
-        index = matrix[len2][len1]
-        seq = [""] * (index + 1)
-        seq[index] = ""
+                    matrix[indexX][indexY] = max(matrix[indexX - 1][indexY], matrix[indexX][indexY - 1])
 
-        index1 = len2
-        index2 = len1
-        while index1 > 0 and index2 > 0:
-            if correct[index1 - 1] == input[index2 - 1]:
-                seq[index - 1] = correct[index1 - 1]
-                index1 -= 1
-                index2 -= 1
-                index -= 1
-            elif matrix[index1 - 1][index2] > matrix[index1][index2 - 1]:
-                index1 -= 1
-            else:
-                index2 -= 1
-                
-        print("".join(seq))
-        # Printing the sub sequences
-        #print("Correc sequence is: " + correct + "\nInput sequence is: " + input)
-        #print("Longest common subsequence is: " + "".join(seq))
+        seqs = self.findSequence(input, len(correct), len(input), matrix)
+        seqs.sort()
+        return seqs[0]
 
+
+# Instantiate class and add input
 comparator = inputCompare()
 for line in fileinput.input():
     x = [int(i) for i in line.split()]
     comparator.addInput(x)
 
+# Run all inputs
 comparator.correct = comparator.inputs[0][1]
 comparator.maxRuns = comparator.inputs[0][0]
 del comparator.inputs[0]
 for input in comparator.inputs:
-    comparator.findSequence(str(input[0]))
-
-
-    
+    output = comparator.findRightSequence(str(input[0]))
+    print(str(len(output)) + " " + str(output))
